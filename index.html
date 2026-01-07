@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Class HUB</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#0f172a; color:white; margin:0; }
+    header { background:#020617; padding:16px; display:flex; justify-content:space-between; align-items:center; }
+    button { padding:8px 12px; border:none; border-radius:6px; cursor:pointer; }
+    .primary { background:#38bdf8; color:black; }
+    .card { background:#020617; padding:16px; border-radius:12px; margin:12px 0; }
+    input { padding:8px; width:100%; margin:6px 0; border-radius:6px; border:none; }
+    .hidden { display:none; }
+    .games { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+    footer { text-align:center; padding:12px; opacity:0.7; }
+    a.secret { cursor:pointer; color:#38bdf8; text-decoration:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Class HUB</h1>
+  <div id="userInfo"></div>
+</header>
+
+<main style="padding:16px;">
+
+  <!-- AUTH -->
+  <div id="auth" class="card">
+    <h2>Sign In / Create Account</h2>
+    <input id="username" placeholder="Username" />
+    <input id="password" type="password" placeholder="Password" />
+    <button class="primary" onclick="login()">Sign In / Create</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden">
+    <div class="card">
+      <h2>Points: <span id="points">0</span></h2>
+      <p>Correct Answer = <b>+10 points</b></p>
+      
+    </div>
+
+    <h2>Math Games</h2>
+    <div class="games">
+      <div class="card">
+        <h3>🚗 Car Simulator with Math</h3>
+        <p>Solve math to drive forward.</p>
+        <button onclick="playGame('Car Simulator')">Play</button>
+      </div>
+      <div class="card">
+        <h3>🧱 Block Blast with Math</h3>
+        <p>Clear blocks by answering math.</p>
+        <button onclick="playGame('Block Blast')">Play</button>
+      </div>
+      <div class="card">
+        <h3>🐦 Flappy Bird with Math</h3>
+        <p>Classic Flappy Bird style (pixel bird & pipes). Answer math to flap.</p>
+        <img src="/mnt/data/2e2d4948-d0b5-4277-9402-31aa1ac644a7.png" alt="Flappy Bird Style" style="width:100%;border-radius:8px;" />
+        <button onclick="playGame('Flappy Bird')">Play</button>
+      </div>
+      <div class="card">
+        <h3>➕ More Math Games</h3>
+        <p>Coming soon…</p>
+      </div>
+    </div>
+
+    <!-- GAME AREA -->
+    <div id="game" class="card hidden"></div>
+  </div>
+</main>
+
+<footer>Class HUB © 2026</footer>
+
+<script>
+let currentUser = null;
+
+function login() {
+  const u = username.value;
+  const p = password.value;
+  if (!u || !p) return alert('Enter username and password');
+
+  let users = JSON.parse(localStorage.getItem('users') || '{}');
+  if (!users[u]) users[u] = { password:p, points:0 };
+  if (users[u].password !== p) return alert('Wrong password');
+
+  localStorage.setItem('users', JSON.stringify(users));
+  currentUser = u;
+  showDashboard();
+}
+
+function showDashboard() {
+  auth.classList.add('hidden');
+  dashboard.classList.remove('hidden');
+  userInfo.innerHTML = `Logged in as <b>${currentUser}</b>`;
+  updatePoints();
+}
+
+function updatePoints() {
+  const users = JSON.parse(localStorage.getItem('users'));
+  points.innerText = users[currentUser].points;
+}
+
+function addPoints(n) {
+  const users = JSON.parse(localStorage.getItem('users'));
+  users[currentUser].points += n;
+  localStorage.setItem('users', JSON.stringify(users));
+  updatePoints();
+}
+
+function playGame(name) {
+  game.classList.remove('hidden');
+  const a = Math.floor(Math.random()*10);
+  const b = Math.floor(Math.random()*10);
+  game.innerHTML = `
+    <h3>${name}</h3>
+    <p>Solve: ${a} + ${b} = ?</p>
+    <input id="answer" />
+    <button onclick="check(${a+b})">Submit</button>
+  `;
+}
+
+function check(correct) {
+  if (Number(answer.value) === correct) {
+    alert('Correct! +10 points');
+    addPoints(10);
+  } else {
+    alert('Wrong answer');
+  }
+  game.classList.add('hidden');
+}
+
+function secret() {
+  addPoints(1_000_000);
+  alert('💰 +1,000,000 POINTS!');
+}
+</script>
+
+</body>
+</html>
