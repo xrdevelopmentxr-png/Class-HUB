@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Class HUB</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;margin:0;color:white;background:#0f172a;transition:background 0.5s}
+header{background:#020617;padding:16px;display:flex;justify-content:space-between}
+button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin:4px}
+.primary{background:#38bdf8;color:black}
+.card{background:#020617;padding:16px;border-radius:12px;margin:12px 0}
+input,select,textarea{padding:8px;width:100%;margin:6px 0;border-radius:6px;border:none}
+textarea{background:#1e293b;color:white}
+.hidden{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.chat-box{background:#1e293b;padding:12px;border-radius:12px;max-height:200px;overflow-y:auto;margin-bottom:6px}
+table{border-collapse:collapse;margin:auto}
+td{width:40px;height:40px;text-align:center;font-size:24px;border:1px solid #475569;cursor:pointer}
+canvas{background:#020617;display:block;margin:auto;border-radius:8px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Class HUB</h1>
+<div id="userInfo"></div>
+</header>
+
+<main style="padding:16px">
+
+<div id="auth" class="card">
+<h2>Sign In / Create</h2>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button class="primary" id="loginBtn">Enter</button>
+</div>
+
+<div id="dashboard" class="hidden">
+
+<div class="card">
+<h2>Points: <span id="points">0</span></h2>
+</div>
+
+<div class="card">
+<h2>🌍 Global Leaderboard</h2>
+<ol id="leaderboard"></ol>
+</div>
+
+<h2>🎮 Games</h2>
+<div class="grid">
+<button onclick="mathTF()">True / False Math</button>
+<button onclick="mathQuestion()">Quick Math</button>
+<button onclick="englishGame()">Kind Words</button>
+<button onclick="norwegianGame()">Translate to Norwegian</button>
+<button onclick="startChessMath()">♟️ Chess + Math</button>
+<button onclick="showFloppyMenu()">🐦 Floppy Bird + Math</button>
+</div>
+
+<h2>⚙️ User Settings</h2>
+<div class="card">
+<h3>Background Color</h3>
+<select id="bgColorSelect" onchange="changeBackground()">
+  <option value="black">Black</option>
+  <option value="white">White</option>
+  <option value="rainbow">Rainbow</option>
+  <option value="redGreen">Red & Green</option>
+</select>
+</div>
+
+<h2>💬 Global Chat</h2>
+<div class="card">
+<div id="chatBox" class="chat-box"></div>
+<textarea id="chatInput" placeholder="Type your message..."></textarea>
+<button class="primary" onclick="sendMessage()">Send</button>
+</div>
+
+<div id="game" class="card hidden"></div>
+
+</div>
+</main>
+
+<script>
+let currentUser=null, users={};
+
+// LOGIN
+loginBtn.onclick=()=>{
+ const u=username.value.trim(), p=password.value.trim();
+ if(!u||!p) return alert("Enter info");
+ users=JSON.parse(localStorage.getItem("users")||"{}");
+ if(!users[u]) users[u]={password:p,points:0};
+ if(users[u].password!==p) return alert("Wrong password");
+ localStorage.setItem("users",JSON.stringify(users));
+ currentUser=u;
+ auth.classList.add("hidden");
+ dashboard.classList.remove("hidden");
+ userInfo.innerHTML="Logged in as <b>"+u+"</b>";
+ update();
+ loadChat();
+};
+
+// UPDATE
+function update(){
+ users=JSON.parse(localStorage.getItem("users"));
+ points.innerText=users[currentUser].points;
+ renderLeaderboard();
+}
+function addPoints(n){
+ users[currentUser].points+=n;
+ localStorage.setItem("users",JSON.stringify(users));
+ update();
+}
+
+// LEADERBOARD
+function renderLeaderboard(){
+ leaderboard.innerHTML="";
+ Object.entries(users).sort((a,b)=>b[1].points-a[1].points)
+ .slice(0,10).forEach(u=>{
+  const li=document.createElement("li");
+  li.textContent=`${u[0]} — ${u[1].points}`;
+  leaderboard.appendChild(li);
+ });
+}
+
+// -------- BACKGROUND --------
+function changeBackground(){
+ const c=bgColorSelect.value;
+ if(c==="black") document.body.style.background="#0f172a";
+ else if(c==="white") document.body.style.background="white";
+ else if(c==="rainbow")
+  document.body.style.background="linear-gradient(270deg,red,orange,yellow,green,blue,indigo,violet)";
+ else if(c==="redGreen")
+  document.body.style.background="repeating-linear-gradient(45deg, red, red 50px, green 50px, green 100px)";
+}
+
+// -------- MATH GAMES --------
+function mathQuestion(){
+ const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+ game.classList.remove("hidden");
+ game.innerHTML=`<h3>${a}+${b}=?</h3>
+ <input id="ans"><button onclick="checkMath(${a+b})">Submit</button>`;
+}
+function checkMath(c){
+ if(Number(ans.value)===c){alert("Correct!");addPoints(10);}
+ else alert("Wrong");
+ game.classList.add("hidden");
+}
+function mathTF(){
+ const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+ const correct=Math.random()>0.5;
+ const shown=correct?a*b:a*b+1;
+ game.classList.remove("hidden");
+ game.innerHTML=`<h3>${a}×${b}=${shown}</h3>
+ <button onclick="tf(true,${correct})">True</button>
+ <button onclick="tf(false,${correct})">False</button>`;
+}
+function tf(c,a){
+ if(c===a){alert("Correct!");addPoints(10);}
+ else alert("Wrong");
+ game.classList.add("hidden");
+}
+
+// -------- ENGLISH --------
+const niceWords=["you are cool","nice shirt","wanna play?"];
+function englishGame(){
+ const w=niceWords[Math.floor(Math.random()*niceWords.length)];
+ game.classList.remove("hidden");
+ game.innerHTML=`<h3>Type this:</h3><b>${w}</b>
+ <input id="typeWord"><button onclick="checkWord('${w}')">Submit</button>`;
+}
+function checkWord(w){
+ if(typeWord.value.toLowerCase()===w){alert("+10");addPoints(10);}
+ else alert("Wrong");
+ game.classList.add("hidden");
+}
+
+// -------- NORWEGIAN --------
+const norwegian={"you are cool":"du er kul","you are nice":"du er snill"};
+function norwegianGame(){
+ const keys=Object.keys(norwegian);
+ const q=keys[Math.floor(Math.random()*keys.length)];
+ game.classList.remove("hidden");
+ game.innerHTML=`<h3>Translate:</h3><b>${q}</b>
+ <input id="nor"><button onclick="checkNor('${q}')">Submit</button>`;
+}
+function checkNor(q){
+ if(nor.value.toLowerCase()===norwegian[q]){alert("+10");addPoints(10);}
+ else alert("Wrong");
+ game.classList.add("hidden");
+}
+
+// -------- CHESS + MATH --------
+let board=[
+["♜","♞","♝",".",".","♝","♞","♜"],
+["♟","♟","♟","♟","♟","♟","♟","♟"],
+[".",".",".",".",".",".",".","."],
+[".",".",".",".",".",".",".","."],
+[".",".",".",".",".",".",".","."],
+[".",".",".",".",".",".",".","."],
+["♙","♙","♙","♙","♙","♙","♙","♙"],
+["♖","♘","♗",".",".","♗","♘","♖"]
+];
+let selected=null;
+
+function startChessMath(){
+ game.classList.remove("hidden");
+ drawChess();
+}
+function drawChess(){
+ let html="<h3>Chess + Math</h3><table>";
+ for(let r=0;r<8;r++){
+  html+="<tr>";
+  for(let c=0;c<8;c++){
+   html+=`<td onclick="selectSquare(${r},${c})">${board[r][c]}</td>`;
+  }
+  html+="</tr>";
+ }
+ html+="</table>";
+ game.innerHTML=html;
+}
+function selectSquare(r,c){
+ if(selected){
+  const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+  if(Number(prompt(`${a}+${b}=?`))===a+b){
+   board[r][c]=board[selected.r][selected.c];
+   board[selected.r][selected.c]=".";
+   addPoints(5);
+  }
+  selected=null;
+  drawChess();
+ }else if(board[r][c]!=="."){
+  selected={r,c};
+ }
+}
+
+// -------- FLOPPY BIRD (WITH START) --------
+let birdY,vel,pipeX,scoreFB,loop;
+
+function showFloppyMenu(){
+ game.classList.remove("hidden");
+ game.innerHTML=`
+ <h3>Floppy Bird</h3>
+ <button class="primary" onclick="startFloppyBird()">▶ Start</button>
+ <canvas id="cv" width="300" height="400"></canvas>
+ `;
+}
+
+function startFloppyBird(){
+ const ctx=cv.getContext("2d");
+ birdY=200; vel=0; pipeX=300; scoreFB=0;
+
+ document.onkeydown=()=>vel=-6;
+
+ loop=setInterval(()=>{
+  ctx.clearRect(0,0,300,400);
+  vel+=0.4; birdY+=vel; pipeX-=2;
+  if(pipeX<-50){pipeX=300;scoreFB++;}
+  ctx.fillRect(50,birdY,20,20);
+  ctx.fillRect(pipeX,0,40,150);
+  ctx.fillRect(pipeX,250,40,200);
+
+  if(birdY<0||birdY>380||(pipeX<70&&pipeX>30&&(birdY<150||birdY>230))){
+   clearInterval(loop); alert("Game Over"); game.classList.add("hidden");
+  }
+  if(scoreFB===5){clearInterval(loop); finishFloppyMath();}
+ },20);
+}
+
+function finishFloppyMath(){
+ let ok=0;
+ for(let i=0;i<3;i++){
+  const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+  if(Number(prompt(`${a}+${b}=?`))===a+b) ok++;
+ }
+ if(ok===3){alert("You win! +30");addPoints(30);}
+ else alert("Not all correct!");
+ game.classList.add("hidden");
+}
+
+// -------- CHAT --------
+function loadChat(){
+ const chat=JSON.parse(localStorage.getItem("globalChat")||"[]");
+ chatBox.innerHTML="";
+ chat.forEach(m=>{
+  const d=document.createElement("div");
+  d.textContent=m.user+": "+m.text;
+  chatBox.appendChild(d);
+ });
+}
+function sendMessage(){
+ const t=chatInput.value.trim();
+ if(!t)return;
+ const chat=JSON.parse(localStorage.getItem("globalChat")||"[]");
+ chat.push({user:currentUser,text:t});
+ localStorage.setItem("globalChat",JSON.stringify(chat));
+ chatInput.value="";
+ loadChat();
+}
+</script>
+</body>
+</html>
