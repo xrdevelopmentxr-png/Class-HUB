@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Class HUB</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;background:#0f172a;color:white;margin:0}
+header{background:#020617;padding:16px;display:flex;justify-content:space-between}
+button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin:4px}
+.primary{background:#38bdf8;color:black}
+.card{background:#020617;padding:16px;border-radius:12px;margin:12px 0}
+input{padding:8px;width:100%;margin:6px 0;border-radius:6px;border:none}
+.hidden{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Class HUB</h1>
+<div id="userInfo"></div>
+</header>
+
+<main style="padding:16px">
+
+<div id="auth" class="card">
+<h2>Sign In / Create</h2>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button class="primary" id="loginBtn">Enter</button>
+</div>
+
+<div id="dashboard" class="hidden">
+
+<div class="card">
+<h2>Points: <span id="points">0</span></h2>
+</div>
+
+<div class="card">
+<h2>🌍 Global Leaderboard</h2>
+<ol id="leaderboard"></ol>
+</div>
+
+<h2>📘 Math Games</h2>
+<div class="grid">
+<button onclick="mathTF()">True / False Math</button>
+<button onclick="mathQuestion()">Quick Math</button>
+</div>
+
+<h2>📖 English Games</h2>
+<div class="grid">
+<button onclick="englishGame()">Kind Words</button>
+</div>
+
+<h2>🇳🇴 Norwegian Games</h2>
+<div class="grid">
+<button onclick="norwegianGame()">Translate to Norwegian</button>
+</div>
+
+<div id="game" class="card hidden"></div>
+
+</div>
+</main>
+
+<script>
+let currentUser=null, users={};
+
+// LOGIN
+loginBtn.onclick=()=>{
+ const u=username.value.trim(), p=password.value.trim();
+ if(!u||!p) return alert("Enter info");
+ users=JSON.parse(localStorage.getItem("users")||"{}");
+ if(!users[u]) users[u]={password:p,points:0};
+ if(users[u].password!==p) return alert("Wrong password");
+ localStorage.setItem("users",JSON.stringify(users));
+ currentUser=u;
+ auth.classList.add("hidden");
+ dashboard.classList.remove("hidden");
+ userInfo.innerHTML="Logged in as <b>"+u+"</b>";
+ update();
+};
+
+function update(){
+ users=JSON.parse(localStorage.getItem("users"));
+ points.innerText=users[currentUser].points;
+ renderLeaderboard();
+}
+function addPoints(n){
+ users[currentUser].points+=n;
+ localStorage.setItem("users",JSON.stringify(users));
+ update();
+}
+
+// LEADERBOARD
+function renderLeaderboard(){
+ leaderboard.innerHTML="";
+ Object.entries(users)
+  .sort((a,b)=>b[1].points-a[1].points)
+  .slice(0,10)
+  .forEach(u=>{
+    const li=document.createElement("li");
+    li.textContent=`${u[0]} — ${u[1].points}`;
+    leaderboard.appendChild(li);
+  });
+}
+
+// MATH GAMES
+function mathQuestion(){
+ const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+ game.classList.remove("hidden");
+ game.innerHTML=`
+ <h3>${a} + ${b} = ?</h3>
+ <input id="ans">
+ <button onclick="checkMath(${a+b})">Submit</button>`;
+}
+function checkMath(c){
+ if(Number(ans.value)===c){alert("Correct!");addPoints(10);}
+ else alert("Wrong");
+ game.classList.add("hidden");
+}
+function mathTF(){
+ const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+ const correct=Math.random()>0.5;
+ const shown=correct?a*b:a*b+1;
+ game.classList.remove("hidden");
+ game.innerHTML=`
+ <h3>${a} × ${b} = ${shown}</h3>
+ <button onclick="tf(true,${correct})">True</button>
+ <button onclick="tf(false,${correct})">False</button>`;
+}
+function tf(c,ans){
+ if(c===ans){alert("Correct!");addPoints(10);}
+ else alert("Wrong");
+ game.classList.add("hidden");
+}
+
+// ENGLISH GAME
+const niceWords=[
+ "you are cool",
+ "nice shirt",
+ "wanna play?",
+ "you are nice"
+];
+function englishGame(){
+ const w=niceWords[Math.floor(Math.random()*niceWords.length)];
+ game.classList.remove("hidden");
+ game.innerHTML=`
+ <h3>Type this phrase:</h3>
+ <b>${w}</b>
+ <input id="typeWord">
+ <button onclick="checkWord('${w}')">Submit</button>`;
+}
+function checkWord(w){
+ if(typeWord.value.toLowerCase()===w){
+   alert("Nice! +10");
+   addPoints(10);
+ } else alert("Try again");
+ game.classList.add("hidden");
+}
+
+// NORWEGIAN GAME
+const norwegian={
+ "you are cool":"du er kul",
+ "you are nice":"du er snill"
+};
+function norwegianGame(){
+ const keys=Object.keys(norwegian);
+ const q=keys[Math.floor(Math.random()*keys.length)];
+ game.classList.remove("hidden");
+ game.innerHTML=`
+ <h3>Translate to Norwegian:</h3>
+ <b>${q}</b>
+ <input id="nor">
+ <button onclick="checkNor('${q}')">Submit</button>`;
+}
+function checkNor(q){
+ if(nor.value.toLowerCase()===norwegian[q]){
+   alert("Correct! +10");
+   addPoints(10);
+ } else alert("Wrong");
+ game.classList.add("hidden");
+}
+</script>
+</body>
+</html>
