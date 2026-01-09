@@ -5,7 +5,7 @@
 <title>Class HUB</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial;margin:0;color:white;background:#0f172a;transition:background 0.5s}
+body{font-family:Arial;margin:0;color:white;background:#0f172a;transition:background .5s}
 header{background:#020617;padding:16px;display:flex;justify-content:space-between}
 button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin:4px}
 .primary{background:#38bdf8;color:black}
@@ -14,9 +14,7 @@ input,select,textarea{padding:8px;width:100%;margin:6px 0;border-radius:6px;bord
 textarea{background:#1e293b;color:white}
 .hidden{display:none}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.chat-box{background:#1e293b;padding:12px;border-radius:12px;max-height:200px;overflow-y:auto;margin-bottom:6px}
-table{border-collapse:collapse;margin:auto}
-td{width:40px;height:40px;text-align:center;font-size:24px;border:1px solid #475569;cursor:pointer}
+.chat-box{background:#1e293b;padding:12px;border-radius:12px;max-height:200px;overflow-y:auto}
 canvas{background:#020617;display:block;margin:auto;border-radius:8px}
 </style>
 </head>
@@ -44,36 +42,40 @@ canvas{background:#020617;display:block;margin:auto;border-radius:8px}
 </div>
 
 <div class="card">
-<h2>🌍 Global Leaderboard</h2>
+<h2>🌍 Leaderboard</h2>
 <ol id="leaderboard"></ol>
 </div>
 
-<h2>🎮 Games by Ryzo</h2>
+<h2>🎮 Games</h2>
 <div class="grid">
 <button onclick="mathTF()">True / False Math</button>
 <button onclick="mathQuestion()">Quick Math</button>
-<button onclick="englishGame()">Kind Words</button>
-<button onclick="norwegianGame()">Translate to Norwegian</button>
-<button onclick="startChessMath()">♟️ Chess + Math</button>
-<button onclick="showFloppyMenu()">🐦 Floppy Bird + Math</button>
+<button onclick="speedMath()">⚡ Speed Math</button>
+<button onclick="multiRush()">✖️ Multiply Rush</button>
+<button onclick="startUNO()">🃏 UNO</button>
+<button onclick="showFloppyMenu()">🐦 Floppy Bird</button>
+</div>
+
+<h2>👤 Profile Checker</h2>
+<div class="card">
+<input id="searchUser" placeholder="Username">
+<button onclick="checkProfile()">Search</button>
+<p id="profileResult"></p>
 </div>
 
 <h2>⚙️ User Settings</h2>
 <div class="card">
-<h3>Background Color</h3>
-<select id="bgColorSelect" onchange="changeBackground()">
-  <option value="black">Black</option>
-  <option value="white">White</option>
-  <option value="rainbow">Rainbow</option>
-  <option value="redGreen">Red & Green</option>
-</select>
-</div>
+<h3>Change Password</h3>
+<input id="newPassword" type="password" placeholder="New Password">
+<button onclick="changePassword()">Update</button>
 
-<h2>💬 Global Chat</h2>
-<div class="card">
-<div id="chatBox" class="chat-box"></div>
-<textarea id="chatInput" placeholder="Type your message..."></textarea>
-<button class="primary" onclick="sendMessage()">Send</button>
+<h3>Background</h3>
+<select id="bgColorSelect" onchange="changeBackground()">
+<option value="black">Black</option>
+<option value="white">White</option>
+<option value="rainbow">Rainbow</option>
+<option value="redGreen">Red & Green</option>
+</select>
 </div>
 
 <div id="game" class="card hidden"></div>
@@ -86,7 +88,7 @@ let currentUser=null, users={};
 
 // LOGIN
 loginBtn.onclick=()=>{
- const u=username.value.trim(), p=password.value.trim();
+ const u=username.value.trim(),p=password.value.trim();
  if(!u||!p) return alert("Enter info");
  users=JSON.parse(localStorage.getItem("users")||"{}");
  if(!users[u]) users[u]={password:p,points:0};
@@ -97,23 +99,12 @@ loginBtn.onclick=()=>{
  dashboard.classList.remove("hidden");
  userInfo.innerHTML="Logged in as <b>"+u+"</b>";
  update();
- loadChat();
 };
 
 // UPDATE
 function update(){
  users=JSON.parse(localStorage.getItem("users"));
  points.innerText=users[currentUser].points;
- renderLeaderboard();
-}
-function addPoints(n){
- users[currentUser].points+=n;
- localStorage.setItem("users",JSON.stringify(users));
- update();
-}
-
-// LEADERBOARD
-function renderLeaderboard(){
  leaderboard.innerHTML="";
  Object.entries(users).sort((a,b)=>b[1].points-a[1].points)
  .slice(0,10).forEach(u=>{
@@ -122,135 +113,116 @@ function renderLeaderboard(){
   leaderboard.appendChild(li);
  });
 }
+function addPoints(n){
+ users[currentUser].points+=n;
+ localStorage.setItem("users",JSON.stringify(users));
+ update();
+}
 
-// -------- BACKGROUND --------
+// BACKGROUND
 function changeBackground(){
  const c=bgColorSelect.value;
  if(c==="black") document.body.style.background="#0f172a";
- else if(c==="white") document.body.style.background="white";
- else if(c==="rainbow")
-  document.body.style.background="linear-gradient(270deg,red,orange,yellow,green,blue,indigo,violet)";
- else if(c==="redGreen")
-  document.body.style.background="repeating-linear-gradient(45deg, red, red 50px, green 50px, green 100px)";
+ if(c==="white") document.body.style.background="white";
+ if(c==="rainbow") document.body.style.background="linear-gradient(270deg,red,orange,yellow,green,blue,indigo,violet)";
+ if(c==="redGreen") document.body.style.background="repeating-linear-gradient(45deg,red,red 50px,green 50px,green 100px)";
 }
 
-// -------- MATH GAMES --------
+// PASSWORD
+function changePassword(){
+ const p=newPassword.value.trim();
+ if(!p) return alert("Enter password");
+ users[currentUser].password=p;
+ localStorage.setItem("users",JSON.stringify(users));
+ alert("Password changed");
+}
+
+// PROFILE CHECKER
+function checkProfile(){
+ const u=searchUser.value.trim();
+ users=JSON.parse(localStorage.getItem("users")||"{}");
+ profileResult.textContent=
+  users[u]?`${u} has ${users[u].points} points`:"User not found";
+}
+
+// ---------- MATH GAMES ----------
 function mathQuestion(){
  const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
  game.classList.remove("hidden");
- game.innerHTML=`<h3>${a}+${b}=?</h3>
- <input id="ans"><button onclick="checkMath(${a+b})">Submit</button>`;
-}
-function checkMath(c){
- if(Number(ans.value)===c){alert("Correct!");addPoints(10);}
- else alert("Wrong");
- game.classList.add("hidden");
+ game.innerHTML=`${a}+${b}=?<br><input id="ans"><button onclick="if(ans.value==${a+b}){addPoints(10);alert('Correct')}game.classList.add('hidden')">OK</button>`;
 }
 function mathTF(){
  const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
- const correct=Math.random()>0.5;
- const shown=correct?a*b:a*b+1;
+ const c=Math.random()>0.5,shown=c?a*b:a*b+1;
  game.classList.remove("hidden");
- game.innerHTML=`<h3>${a}×${b}=${shown}</h3>
- <button onclick="tf(true,${correct})">True</button>
- <button onclick="tf(false,${correct})">False</button>`;
+ game.innerHTML=`${a}×${b}=${shown}<br>
+ <button onclick="tf(true,${c})">True</button>
+ <button onclick="tf(false,${c})">False</button>`;
 }
-function tf(c,a){
- if(c===a){alert("Correct!");addPoints(10);}
- else alert("Wrong");
- game.classList.add("hidden");
-}
+function tf(x,y){if(x===y){addPoints(10);alert("Correct")}game.classList.add("hidden");}
 
-// -------- ENGLISH --------
-const niceWords=["you are cool","nice shirt","wanna play?"];
-function englishGame(){
- const w=niceWords[Math.floor(Math.random()*niceWords.length)];
- game.classList.remove("hidden");
- game.innerHTML=`<h3>Type this:</h3><b>${w}</b>
- <input id="typeWord"><button onclick="checkWord('${w}')">Submit</button>`;
-}
-function checkWord(w){
- if(typeWord.value.toLowerCase()===w){alert("+10");addPoints(10);}
- else alert("Wrong");
- game.classList.add("hidden");
-}
-
-// -------- NORWEGIAN --------
-const norwegian={"you are cool":"du er kul","you are nice":"du er snill"};
-function norwegianGame(){
- const keys=Object.keys(norwegian);
- const q=keys[Math.floor(Math.random()*keys.length)];
- game.classList.remove("hidden");
- game.innerHTML=`<h3>Translate:</h3><b>${q}</b>
- <input id="nor"><button onclick="checkNor('${q}')">Submit</button>`;
-}
-function checkNor(q){
- if(nor.value.toLowerCase()===norwegian[q]){alert("+10");addPoints(10);}
- else alert("Wrong");
- game.classList.add("hidden");
-}
-
-// -------- CHESS + MATH --------
-let board=[
-["♜","♞","♝",".",".","♝","♞","♜"],
-["♟","♟","♟","♟","♟","♟","♟","♟"],
-[".",".",".",".",".",".",".","."],
-[".",".",".",".",".",".",".","."],
-[".",".",".",".",".",".",".","."],
-[".",".",".",".",".",".",".","."],
-["♙","♙","♙","♙","♙","♙","♙","♙"],
-["♖","♘","♗",".",".","♗","♘","♖"]
-];
-let selected=null;
-
-function startChessMath(){
- game.classList.remove("hidden");
- drawChess();
-}
-function drawChess(){
- let html="<h3>Chess + Math</h3><table>";
- for(let r=0;r<8;r++){
-  html+="<tr>";
-  for(let c=0;c<8;c++){
-   html+=`<td onclick="selectSquare(${r},${c})">${board[r][c]}</td>`;
-  }
-  html+="</tr>";
- }
- html+="</table>";
- game.innerHTML=html;
-}
-function selectSquare(r,c){
- if(selected){
+// SPEED MATH
+function speedMath(){
+ let score=0;
+ for(let i=0;i<5;i++){
   const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
-  if(Number(prompt(`${a}+${b}=?`))===a+b){
-   board[r][c]=board[selected.r][selected.c];
-   board[selected.r][selected.c]=".";
-   addPoints(5);
-  }
-  selected=null;
-  drawChess();
- }else if(board[r][c]!=="."){
-  selected={r,c};
+  if(prompt(`${a}+${b}`)==a+b) score++;
  }
+ addPoints(score*5);
+ alert(`You got ${score}/5`);
 }
 
-// -------- FLOPPY BIRD (WITH START) --------
-let birdY,vel,pipeX,scoreFB,loop;
+// MULTIPLY RUSH
+function multiRush(){
+ let ok=0;
+ for(let i=0;i<5;i++){
+  const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
+  if(prompt(`${a}×${b}`)==a*b) ok++;
+ }
+ addPoints(ok*5);
+ alert(`Correct: ${ok}`);
+}
 
+// ---------- UNO ----------
+let unoColors=["Red","Green","Blue","Yellow"];
+function drawCard(){return unoColors[Math.floor(Math.random()*4)]+" "+(Math.floor(Math.random()*9)+1);}
+let playerCard, cpuCard;
+
+function startUNO(){
+ playerCard=drawCard();
+ cpuCard=drawCard();
+ game.classList.remove("hidden");
+ game.innerHTML=`
+ <h3>UNO</h3>
+ <p>Your card: <b>${playerCard}</b></p>
+ <p>CPU card: <b>${cpuCard}</b></p>
+ <button onclick="playUNO()">Play</button>`;
+}
+function playUNO(){
+ if(playerCard.split(" ")[0]===cpuCard.split(" ")[0] ||
+    playerCard.split(" ")[1]===cpuCard.split(" ")[1]){
+  alert("You win! +20");
+  addPoints(20);
+ }else alert("No match, you lose");
+ game.classList.add("hidden");
+}
+
+// ---------- FLOPPY BIRD (iPad friendly) ----------
+let birdY,vel,pipeX,scoreFB,loop;
 function showFloppyMenu(){
  game.classList.remove("hidden");
  game.innerHTML=`
  <h3>Floppy Bird</h3>
- <button class="primary" onclick="startFloppyBird()">▶ Start</button>
- <canvas id="cv" width="300" height="400"></canvas>
- `;
+ <button class="primary" onclick="startFloppyBird()">Start</button>
+ <canvas id="cv" width="300" height="400"></canvas>`;
 }
-
 function startFloppyBird(){
  const ctx=cv.getContext("2d");
- birdY=200; vel=0; pipeX=300; scoreFB=0;
+ birdY=200;vel=0;pipeX=300;scoreFB=0;
 
- document.onkeydown=()=>vel=-6;
+ function flap(){vel=-6;}
+ document.onclick=flap;
+ document.ontouchstart=flap;
 
  loop=setInterval(()=>{
   ctx.clearRect(0,0,300,400);
@@ -259,45 +231,21 @@ function startFloppyBird(){
   ctx.fillRect(50,birdY,20,20);
   ctx.fillRect(pipeX,0,40,150);
   ctx.fillRect(pipeX,250,40,200);
-
   if(birdY<0||birdY>380||(pipeX<70&&pipeX>30&&(birdY<150||birdY>230))){
    clearInterval(loop); alert("Game Over"); game.classList.add("hidden");
   }
   if(scoreFB===5){clearInterval(loop); finishFloppyMath();}
  },20);
 }
-
 function finishFloppyMath(){
  let ok=0;
  for(let i=0;i<3;i++){
   const a=Math.floor(Math.random()*10),b=Math.floor(Math.random()*10);
-  if(Number(prompt(`${a}+${b}=?`))===a+b) ok++;
+  if(prompt(`${a}+${b}`)==a+b) ok++;
  }
- if(ok===3){alert("You win! +30");addPoints(30);}
- else alert("Not all correct!");
+ if(ok===3){addPoints(30);alert("You win!")}
  game.classList.add("hidden");
-}
-
-// -------- CHAT --------
-function loadChat(){
- const chat=JSON.parse(localStorage.getItem("globalChat")||"[]");
- chatBox.innerHTML="";
- chat.forEach(m=>{
-  const d=document.createElement("div");
-  d.textContent=m.user+": "+m.text;
-  chatBox.appendChild(d);
- });
-}
-function sendMessage(){
- const t=chatInput.value.trim();
- if(!t)return;
- const chat=JSON.parse(localStorage.getItem("globalChat")||"[]");
- chat.push({user:currentUser,text:t});
- localStorage.setItem("globalChat",JSON.stringify(chat));
- chatInput.value="";
- loadChat();
 }
 </script>
 </body>
 </html>
-
